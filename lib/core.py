@@ -1,58 +1,12 @@
-from lib.Net import ViTBase16
+from .classifier import Controller as ClsController
 import cmath
 import math
 import cv2 as cv
-import numpy as np
-import torch
-from PIL import Image
-from torchvision import transforms
-import cv2
 import re
 
-class CC:
-    def __init__(self,weights_path,distribution_classes,pretrained = False):
-        n_classes = len(distribution_classes)
-        self.distribution_classes = distribution_classes
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        # 模型定义和加载
-        self.model = ViTBase16(n_classes=n_classes,pretrained=pretrained) 
-        self.model.load_state_dict(torch.load(weights_path))
-        self.model.to(self.device)
-        
-    @staticmethod
-    def process(group):
-        """
-        对一组图片进行预处理 
-        """
-        img_list = []
-        resize = transforms.Resize([224,244])
-        toTensor = transforms.ToTensor()
-        for img in group:
-            if img.ndim!=2:
-                img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY) #转化为灰度图
-            blur = cv.GaussianBlur(img,(5,5),0)
-            _,thImg = cv.threshold(blur,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)  
-            mask = cv.erode(thImg.astype('uint8'), kernel=np.ones((3,3)))
-            #resize and normalize
-            mask = Image.fromarray(mask)
-            mask = toTensor(resize(mask)) 
-            img_list.append(mask.cpu().numpy())
-        return torch.tensor(img_list) 
-    
-    def get_pred_str(self,group):
-        img_list = CC.process(group)
-        if self.device.type=="cuda":
-            img_list = img_list.cuda()
-        output = self.model(img_list)
-        result = ""
-        for index in output:
-            result += self.distribution_classes[index] 
-        return result
-
-class Word_Classification:
-    def __init__(self, weights_path,distribution_classes):
-        cc_obj = CC(weights_path,distribution_classes)
-        self.cc_obj = cc_obj
+class Word_Classification(object):
+    def __init__(self, gpu_id=0):
+        self.classifier = ClsController(gpu_id=gpu_id)
         
     @staticmethod
     def get_img_character_position(bbox_list, center):
@@ -76,7 +30,7 @@ class Word_Classification:
         for item in bbox_list:
             xyxy = item[0]+item[1]
             CharacterCenter = getCharacterCenterByInfo(xyxy)
-            xy =  (CharacterCenter[0]-center[0], center[1]-CharacterCenter[1]) #得到字符中心点相对圆心的直角坐标
+            xy = (CharacterCenter[0]-center[0], center[1]-CharacterCenter[1]) #得到字符中心点相对圆心的直角坐标
             cn = complex(xy[0],xy[1])
             r,angle = cmath.polar(cn)  #返回长度和弧度
     #         if(angle<0):
@@ -244,6 +198,7 @@ class Word_Classification:
                 raw_group.append(result)
             raw_group_list.append(raw_group)
         return raw_group_list
+    
     @staticmethod
     def get_redetect_info(pattern_list,result_list):
         """
@@ -261,21 +216,21 @@ class Word_Classification:
             for pattern in re_list:
                 re_revise = ""
                 for char in pattern:
-                    if (char in ('0','D','O')):
+                    if char in ('0','D','O'):
                         re_revise += "[0DO]"
-                    elif (char in ('7','T')):
+                    elif char in ('7','T'):
                         re_revise += "[7T]"
-                    elif (char in ('S','5')):
+                    elif char in ('S','5'):
                         re_revise += "[S5]"
-                    elif (char in ('Z','2')):
+                    elif char in ('Z','2'):
                         re_revise += "[Z2]"
-                    elif (char in ('1','I')):
+                    elif char in ('1','I'):
                         re_revise += "[1I]"
-                    elif (char in ('B','6')):
+                    elif char in ('B','6'):
                         re_revise += "[B6]"
-                    elif (char in ('B','8')):
+                    elif char in ('B','8'):
                         re_revise += "[B8]"
-                    elif not(char.isalnum()):
+                    elif not char.isalnum():
                         re_revise += "."
                     else:
                         re_revise += char
@@ -319,7 +274,7 @@ class Word_Classification:
         raw_group_list = self.get_raw_group(cluster_character_list, img, center, Rlength, cropRlength)
         str_list = []
         for raw_group in raw_group_list:
-            group_str = self.cc_obj.get_pred_str(raw_group)
+            group_str = self.classifier.infer(raw_group)
             str_list.append(group_str)
         is_NG = Word_Classification.get_redetect_info(pattern_list,str_list)
         result = {"str_bbox_list":str_bbox_list,"pattern_list":pattern_list,"str_list":str_list}
