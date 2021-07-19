@@ -5,6 +5,7 @@ import os
 import time  
 from external_lib.Vi_cA_13 import Ring_Processer
 from lib.core import Word_Classification
+
 """
 获取一张图的半径，圆心信息
 """
@@ -22,21 +23,20 @@ def main(img,bbox_list,r_inner,r_outer,center,pattern_list):
     start = time.time()
 
     word_classifier = Word_Classification(weights_path,distribution_classes)
-    is_NG,result = word_classifier.get_str_matchInfo(img,bbox_list,r_inner,r_outer,center,pattern_list)
+    is_NG, result = word_classifier.get_str_matchInfo(img,bbox_list,r_inner,r_outer,center,pattern_list)
     
     end = time.time()
 
     print("last: ",end-start)
     print("is_NG:",is_NG)
     print("info:",result)
-    # img0 = img.copy()
-    # for xyxy in result["str_bbox_list"]:
-    #     xy_min = [int(xyxy[0]),int(xyxy[1])]
-    #     xy_max = [int(xyxy[2]),int(xyxy[3])]
-    #     img0 = cv.rectangle(img0, xy_min,xy_max, (0,0,255), 10)
-    # plt.figure(figsize=(12,12))
-    # plt.imshow(img0)
-    # plt.show()
+    for xyxy in result["str_bbox_list"]:
+        pt1 = (int(xyxy[0]),int(xyxy[1]))
+        pt2 = (int(xyxy[2]),int(xyxy[3]))
+        img = cv.rectangle(img, pt1, pt2, (0,0,255), thickness=10)
+    plt.figure(figsize=(8,8))
+    plt.imshow(img)
+    plt.show()
 
 if __name__=="__main__":
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
@@ -45,11 +45,7 @@ if __name__=="__main__":
     img_json_path = "./assets/test.json"
 
     #get info
-    ring_obj = Ring_Processer(img)
-    circles = ring_obj.circle_list
-    r_inner = circles[2][2]
-    r_outer = circles[3][2]
-    center = ring_obj.get_center(circles)
+    r_inner,r_outer,center = get_radius_center(img)
     bbox_list = []
     with open(img_json_path,'r',encoding='utf8')as fp:
         json_data = json.load(fp)
