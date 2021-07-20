@@ -6,8 +6,8 @@ import re
 
 
 class Word_Classification:
-    def __init__(self, weights_path,distribution_classes):
-        cc_obj = ClsController(weights_path,distribution_classes)
+    def __init__(self, gpu_id=0):
+        cc_obj = ClsController(gpu_id=gpu_id)
         self.cc_obj = cc_obj
         
     @staticmethod
