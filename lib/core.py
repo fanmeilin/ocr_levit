@@ -217,18 +217,36 @@ class Word_Classification:
             for pattern in re_list:
                 re_revise = ""
                 for char in pattern:
-                    if (char in ('0','D','O','Q')):
-                        re_revise += "[0DOQ]"
-                    elif (char in ('7','T')):
-                        re_revise += "[7T]"
-                    elif (char in ('S','5','2','Z')):
-                        re_revise += "[S52Z]"
-                    elif (char in ('1','I','L')):
-                        re_revise += "[1IL]"
-                    elif (char in ('B','6','8')):
-                        re_revise += "[B68]"
+                    # if (char in ('0','D','O','Q')):
+                    #     re_revise += "[0DOQ]"
+                    # elif (char in ('7','T')):
+                    #     re_revise += "[7T]"
+                    # elif (char in ('S','5','2','Z')):
+                    #     re_revise += "[S52Z]"
+                    # elif (char in ('1','I','L')):
+                    #     re_revise += "[1IL]"
+                    # elif (char in ('B','6','8')):
+                    #     re_revise += "[B68]"
+                    
+                    ### 适用于 2021-07-19\word\word_all.json 数据
+                    if (char=='B'):
+                        re_revise += "[B8SQP9]"
+                    elif (char == 'H'):
+                        re_revise += "[HTP]"
+                    elif (char == '0'):
+                        re_revise += "[H0Q9]"
+                    elif (char == '1'):
+                        re_revise += "[19]"        
+                    elif (char == '6'):
+                        re_revise += "[6F]"     
+                    elif (char == '2'):
+                        re_revise += "[2P]"       
+                    elif (char == 'P'):
+                        re_revise += "[PQ]"   
+                    elif (char == 'L'):
+                        re_revise += "[LA5]"
                     elif not(char.isalnum()):
-                        re_revise += "."
+                        re_revise += ".?"
                     else:
                         re_revise += char
                 re_revise_list.append(re_revise)
