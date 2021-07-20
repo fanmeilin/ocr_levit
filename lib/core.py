@@ -4,9 +4,11 @@ import math
 import cv2 as cv
 import re
 
-class Word_Classification(object):
-    def __init__(self, gpu_id=0):
-        self.classifier = ClsController(gpu_id=gpu_id)
+
+class Word_Classification:
+    def __init__(self, weights_path,distribution_classes):
+        cc_obj = ClsController(weights_path,distribution_classes)
+        self.cc_obj = cc_obj
         
     @staticmethod
     def get_img_character_position(bbox_list, center):
@@ -30,7 +32,7 @@ class Word_Classification(object):
         for item in bbox_list:
             xyxy = item[0]+item[1]
             CharacterCenter = getCharacterCenterByInfo(xyxy)
-            xy = (CharacterCenter[0]-center[0], center[1]-CharacterCenter[1]) #得到字符中心点相对圆心的直角坐标
+            xy =  (CharacterCenter[0]-center[0], center[1]-CharacterCenter[1]) #得到字符中心点相对圆心的直角坐标
             cn = complex(xy[0],xy[1])
             r,angle = cmath.polar(cn)  #返回长度和弧度
     #         if(angle<0):
@@ -198,7 +200,6 @@ class Word_Classification(object):
                 raw_group.append(result)
             raw_group_list.append(raw_group)
         return raw_group_list
-    
     @staticmethod
     def get_redetect_info(pattern_list,result_list):
         """
@@ -216,21 +217,17 @@ class Word_Classification(object):
             for pattern in re_list:
                 re_revise = ""
                 for char in pattern:
-                    if char in ('0','D','O'):
-                        re_revise += "[0DO]"
-                    elif char in ('7','T'):
+                    if (char in ('0','D','O','Q')):
+                        re_revise += "[0DOQ]"
+                    elif (char in ('7','T')):
                         re_revise += "[7T]"
-                    elif char in ('S','5'):
-                        re_revise += "[S5]"
-                    elif char in ('Z','2'):
-                        re_revise += "[Z2]"
-                    elif char in ('1','I'):
-                        re_revise += "[1I]"
-                    elif char in ('B','6'):
-                        re_revise += "[B6]"
-                    elif char in ('B','8'):
-                        re_revise += "[B8]"
-                    elif not char.isalnum():
+                    elif (char in ('S','5','2','Z')):
+                        re_revise += "[S52Z]"
+                    elif (char in ('1','I','L')):
+                        re_revise += "[1IL]"
+                    elif (char in ('B','6','8')):
+                        re_revise += "[B68]"
+                    elif not(char.isalnum()):
                         re_revise += "."
                     else:
                         re_revise += char
@@ -274,8 +271,76 @@ class Word_Classification(object):
         raw_group_list = self.get_raw_group(cluster_character_list, img, center, Rlength, cropRlength)
         str_list = []
         for raw_group in raw_group_list:
-            group_str = self.classifier.infer(raw_group)
+            group_str = self.cc_obj.get_pred_str(raw_group)
             str_list.append(group_str)
         is_NG = Word_Classification.get_redetect_info(pattern_list,str_list)
+        result = {"str_bbox_list":str_bbox_list,"pattern_list":pattern_list,"str_list":str_list}
+        return is_NG,result
+
+
+    @staticmethod
+    def get_detect_info(pattern_list,result_list):
+        """
+        检测字符匹配的情况（仅仅忽略非数字和字母的情况）
+        input: pattern_list:提供的正则表达式列表(仅仅忽略非数字和字母的情况) result_list 网络检测的字符串列表
+        return: message:对比之后返回的检测信息
+        """
+        def revise_re(re_list):
+            """
+            修改提供的正则表达式
+            input: re_list 待修改的字符串列表
+            return：re_revise_list 修改后的字符串列表
+            """
+            re_revise_list = []
+            for pattern in re_list:
+                re_revise = ""
+                for char in pattern:
+                    if not(char.isalnum()):
+                        re_revise += "."
+                    else:
+                        re_revise += char
+                re_revise_list.append(re_revise)
+            return re_revise_list 
+
+        pattern_list = revise_re(pattern_list)
+        is_NG = False
+        if(len(result_list)!=len(pattern_list)):
+            is_NG = True
+            return is_NG
+
+        for item in result_list:
+            flag = False
+            for pattern in pattern_list:
+                match_obj = re.match(pattern,item)
+                if (match_obj and len(item)==len(match_obj.group())):
+                    flag = True
+                    break
+            if not flag:
+                is_NG = True
+                break
+        return is_NG
+
+    def get_str_Info(self, img, bbox_list, r_inner, r_outer, center, pattern_list=[],ratio=0.9,ratio_rwidth=1.7):
+        '''
+        通过图片相关信息，获取聚类且切分好的字符串（仅仅忽略非数字和字母的情况）
+        输入：img：图片 bbox_list：所有字符的box xyxy的信息, r_inner：字符所在的区域的内圆半径,r_outer：字符所在的区域的外圆半径
+        center：圆心 xy，pattern_list:提供的匹配字符串, ratio=0.9 表示剪裁的大小依据 （半径差的ratio倍） ratio_rwidth:判断字符group的基准 thresh：ratio_rwidth*r_width
+        输出：str_list：表示裁剪并旋转后返回的聚类好的字符串列表 message匹配结果信息（仅仅忽略非数字和字母的情况）
+        '''
+        img_position = self.get_img_character_position(bbox_list,center)
+        radius = r_inner+(r_outer-r_inner)/2
+        r_width = r_outer-r_inner
+        # set thresh 字符间弧长的间距不超过半径差的ratio_rwidth倍 则认为是相同group
+        thresh = ratio_rwidth*r_width
+        cluster_character_list = self.cluster_character(img_position,radius, thresh=thresh)
+        str_bbox_list = self.find_strbbox(cluster_character_list)
+        cropRlength = int(ratio*(r_outer-r_inner)) 
+        Rlength = 2*cropRlength
+        raw_group_list = self.get_raw_group(cluster_character_list, img, center, Rlength, cropRlength)
+        str_list = []
+        for raw_group in raw_group_list:
+            group_str = self.cc_obj.get_pred_str(raw_group)
+            str_list.append(group_str)
+        is_NG = Word_Classification.get_detect_info(pattern_list,str_list)
         result = {"str_bbox_list":str_bbox_list,"pattern_list":pattern_list,"str_list":str_list}
         return is_NG,result
