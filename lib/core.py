@@ -5,6 +5,8 @@ import math
 import cv2 as cv
 import re
 import numpy as np
+from lib.detector.lib.utils_vvd import boxes_painter
+from lib.detector.lib.utils_vvd import plt_image_show
 
 
 class Word_Classification:
@@ -312,10 +314,13 @@ class Word_Classification:
         det_res = self.det_obj(img, circles)
         bbox_list = det_res['xyxys']
 
+        painted_img = boxes_painter(img, bbox_list, color=[255, 255, 255])
+        plt_image_show(painted_img)
+
         center = self.get_center(circles)
 
         def find_distance(x):
-            cx, cy = (x[0][0]+x[1][0])/2, (x[0][1]+x[1][1])/2
+            cx, cy = (x[0]+x[2])/2, (x[1]+x[3])/2
             return math.sqrt((cx-center[0])**2+(cy-center[1])**2)
 
         dis_list = list(map(find_distance, bbox_list))
