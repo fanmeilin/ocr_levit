@@ -3,13 +3,14 @@ import cmath
 import math
 import cv2 as cv
 import re
+import numpy as np
 
 
 class Word_Classification:
     def __init__(self, gpu_id=0):
         cc_obj = ClsController(gpu_id=gpu_id)
         self.cc_obj = cc_obj
-        
+
     @staticmethod
     def get_img_character_position(bbox_list, center):
         '''
@@ -200,6 +201,7 @@ class Word_Classification:
                 raw_group.append(result)
             raw_group_list.append(raw_group)
         return raw_group_list
+
     @staticmethod
     def get_redetect_info(pattern_list,result_list):
         """
@@ -269,14 +271,21 @@ class Word_Classification:
                 is_NG = True
                 break
         return is_NG
-    
-    def get_str_matchInfo(self, img, bbox_list, r_inner, r_outer, center, pattern_list=[],ratio=0.9,ratio_rwidth=1.7):
+
+    @staticmethod
+    def get_center(circle_info):
+        return np.mean(np.array(circle_info), axis=0)[:2].tolist()
+
+    def get_str_matchInfo(self, img, bbox_list, circles, pattern_list=[],ratio=0.9,ratio_rwidth=1.7):
         '''
         通过图片相关信息，获取聚类且切分好的字符串
         输入：img：图片 bbox_list：所有字符的box xyxy的信息, r_inner：字符所在的区域的内圆半径,r_outer：字符所在的区域的外圆半径
         center：圆心 xy，pattern_list:提供的匹配字符串, ratio=0.9 表示剪裁的大小依据 （半径差的ratio倍） ratio_rwidth:判断字符group的基准 thresh：ratio_rwidth*r_width
         输出：str_list：表示裁剪并旋转后返回的聚类好的字符串列表 message匹配结果信息
         '''
+        center = self.get_center(circles)
+        r_inner = 100
+        r_outer = 200
         img_position = self.get_img_character_position(bbox_list,center)
         radius = r_inner+(r_outer-r_inner)/2
         r_width = r_outer-r_inner

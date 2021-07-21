@@ -12,16 +12,14 @@ from lib.core import Word_Classification
 def get_radius_center(img):
     ring_obj = Ring_Processer(img)
     circles = ring_obj.circle_list
-    r_inner = circles[2][2]
-    r_outer = circles[3][2]
-    center = ring_obj.get_center(circles)
-    return r_inner,r_outer,center
 
-def main(img,bbox_list,r_inner,r_outer,center,pattern_list):
+    return circles
+
+def main(img,bbox_list,circles,pattern_list):
 
     start = time.time()
     word_classifier = Word_Classification(gpu_id = 0)
-    is_NG, result = word_classifier.get_str_matchInfo(img, bbox_list, r_inner, r_outer, center, pattern_list)
+    is_NG, result = word_classifier.get_str_matchInfo(img, bbox_list, circles, pattern_list)
     end = time.time()
 
     print("last: ",end-start)
@@ -42,7 +40,7 @@ if __name__=="__main__":
     img_json_path = "./assets/test.json"
 
     #get info
-    r_inner,r_outer,center = get_radius_center(img)
+    circles = get_radius_center(img)
     bbox_list = []
     with open(img_json_path,'r',encoding='utf8')as fp:
         json_data = json.load(fp)
@@ -51,4 +49,4 @@ if __name__=="__main__":
             bbox_list.append(item["points"])
     pattern_list = ["6202/P6","B"] 
 
-    main(img,bbox_list,r_inner,r_outer,center,pattern_list)
+    main(img,bbox_list,circles,pattern_list)
