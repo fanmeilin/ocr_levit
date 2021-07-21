@@ -1,4 +1,5 @@
 from .classifier import Controller as ClsController
+from .detector import ocrA_13_det as DetController
 import cmath
 import math
 import cv2 as cv
@@ -8,8 +9,8 @@ import numpy as np
 
 class Word_Classification:
     def __init__(self, gpu_id=0):
-        cc_obj = ClsController(gpu_id=gpu_id)
-        self.cc_obj = cc_obj
+        self.cc_obj = ClsController(gpu_id=gpu_id)
+        self.det_obj = DetController(gpu_id=gpu_id)
 
     @staticmethod
     def get_img_character_position(bbox_list, center):
@@ -307,7 +308,10 @@ class Word_Classification:
             cluster_character_list, img, center, Rlength, cropRlength)
         return str_bbox_list, raw_group_list
 
-    def get_str_matchInfo(self, img, bbox_list, circles, pattern_list=[], ratio=0.9, ratio_rwidth=1.7):
+    def get_str_matchInfo(self, img, circles, pattern_list=[], ratio=0.9, ratio_rwidth=1.7):
+        det_res = self.det_obj(img, circles)
+        bbox_list = det_res['xyxys']
+
         center = self.get_center(circles)
 
         def find_distance(x):
