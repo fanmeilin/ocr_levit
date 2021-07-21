@@ -1,3 +1,4 @@
 /external_lib
 /assets
 /.vscode
+/lib/__pycache__
