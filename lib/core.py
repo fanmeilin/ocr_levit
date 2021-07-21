@@ -244,7 +244,7 @@ class Word_Classification:
                     elif (char == 'H'):
                         re_revise += "[HTP]"
                     elif (char == '0'):
-                        re_revise += "[H0Q9]"
+                        re_revise += "[H08Q9]"
                     elif (char == '1'):
                         re_revise += "[19]"
                     elif (char == '6'):
@@ -311,7 +311,6 @@ class Word_Classification:
     def get_str_matchInfo(self, img, circles, pattern_list=[], ratio=0.9, ratio_rwidth=1.7):
         det_res = self.det_obj(img, circles)
         bbox_list = det_res['xyxys']
-
         center = self.get_center(circles)
 
         def find_distance(x):
