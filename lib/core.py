@@ -257,6 +257,8 @@ class Word_Classification:
                         re_revise += "[PQ]"
                     elif (char == 'L'):
                         re_revise += "[LA5]"
+                    elif (char == '8'):
+                        re_revise += "[80]"
                     elif not(char.isalnum()):
                         re_revise += ".?"
                     else:
