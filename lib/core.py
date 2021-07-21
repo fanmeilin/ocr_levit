@@ -326,10 +326,12 @@ class Word_Classification:
         o_r_inner = circles[2][2]
         o_r_outer = circles[3][2]
         for i, dis in enumerate(dis_list):
+            Info = bbox_list[i]
+            bbox = [[Info[0], Info[1]], [Info[2], Info[3]]]
             if(dis >= i_r_inner and dis <= i_r_outer):
-                i_group_bbox_list.append(bbox_list[i])
+                i_group_bbox_list.append(bbox)
             if(dis >= o_r_inner and dis <= o_r_outer):
-                o_group_bbox_list.append(bbox_list[i])
+                o_group_bbox_list.append(bbox)
         i_str_bbox_list, i_raw_group_list = self.get_str_matchInfoUnit(
             img, i_group_bbox_list, i_r_inner, i_r_outer, center, ratio, ratio_rwidth)
         o_str_bbox_list, o_raw_group_list = self.get_str_matchInfoUnit(
