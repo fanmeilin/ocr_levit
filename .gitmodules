@@ -4,3 +4,6 @@
 [submodule "lib/detector"]
 	path = lib/detector
 	url = git@192.168.10.30:Algorithm4/Programs/Bearing/modules/ocrA_13_lib/detector.git
+[submodule "lib/classifier"]
+	path = lib/classifier
+	url = git@192.168.10.30:Algorithm4/Programs/Bearing/modules/ocrA_13_lib/classifier_levit.git
