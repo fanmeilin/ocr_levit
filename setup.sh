@@ -12,7 +12,7 @@ export AWS_ACCESS_KEY_ID=18M4BI7CGWKWSYELOXC3
 export AWS_SECRET_ACCESS_KEY=zHpZOndT6y4Dkz5GkH4g1DAkyRuDKe7BUFSjbV3b
 
 cd lib/classifier/ && ./setup.sh && cd ..
-cd Ai_detA_13_II/ && ./setup.sh release && cd ..
+cd detector/ && ./setup.sh release && cd ..
 cd ..
 
 case $1 in
