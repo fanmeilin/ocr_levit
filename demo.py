@@ -1,20 +1,20 @@
-
 import sys
+sys.path.append('external_lib/mmdetection')
+
+import time
+import os
 import cv2 as cv
 import matplotlib.pyplot as plt
-sys.path.append('external_lib/mmdetection')
-import json
-import os
-import time
-from external_lib.Vi_cA_13 import Ring_Processer
 from lib.core import Word_Classification
+from external_lib.Vi_cA_13 import Ring_Processer
 
 
 def main(img, circles, pattern_list):
 
     start = time.time()
     word_classifier = Word_Classification(gpu_id=0)
-    is_NG, result = word_classifier.get_str_matchInfo(img, circles, pattern_list)
+    is_NG, result = word_classifier.get_str_matchInfo(
+        img, circles, pattern_list)
     end = time.time()
 
     print("last: ", end-start)

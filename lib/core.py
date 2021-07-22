@@ -91,13 +91,14 @@ class Word_Classification:
             return radius*(angle/180*math.pi)
         if(len(img_position) == 1):
             return [img_position]
+
         img_position = sorted(img_position, key=lambda x: (x[1]), reverse=True)
         start_index = 0
         length = len(img_position)
         result_list = []
-
-        while(get_arc_length(inter_angle(img_position, start_index, False), radius) < thresh):  # 找寻开头元素
-            start_index = index_next(start_index, length, False)
+        if(len(img_position) > 2):
+            while(get_arc_length(inter_angle(img_position, start_index, False), radius) < thresh):  # 找寻开头元素
+                start_index = index_next(start_index, length, False)
 
         select_index = index_next(start_index, length)  # 待聚类的元素
         result = [img_position[start_index]]
