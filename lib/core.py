@@ -5,8 +5,8 @@ import math
 import cv2 as cv
 import re
 import numpy as np
-from lib.detector.lib.utils_vvd import boxes_painter
-from lib.detector.lib.utils_vvd import plt_image_show
+from .detector.lib.utils_vvd import boxes_painter
+from .detector.lib.utils_vvd import plt_image_show
 
 
 class Word_Classification:
